@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Pre-Order & Store Management - Jember Destruction</title>
+  <!-- Tailwind configuration must load before the CDN runtime -->
+  <script src="assets/js/tailwind.config.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons CDN -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Google Font: Inter -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <!-- Custom Font Chomsky for Brand Name -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="min-h-screen flex flex-col bg-brand-black text-zinc-100 antialiased selection:bg-zinc-800 selection:text-white relative">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 w-full border-b border-zinc-800 bg-black/80 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('store')">
+        <div id="navStoreLogo" class="w-10 h-10 bg-black border border-zinc-700 flex items-center justify-center rounded-xl overflow-hidden p-0.5 text-white">
+          <i class="ph ph-skull text-2xl"></i>
+        </div>
+        <span class="font-chomsky text-xl sm:text-2xl tracking-normal text-white flex items-center gap-2" id="navStoreTitle">
+          JEMBER DESTRUCTION
+        </span>
+      </div>
+
+      <!-- Navigation Actions -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <button onclick="switchTab('store')" id="navStoreBtn" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-white text-black hover:bg-zinc-200 flex items-center gap-1.5 sm:gap-2">
+          <i class="ph ph-storefront text-base"></i>
+          <span class="hidden sm:inline">Toko Pre-Order</span>
+        </button>
+        <button onclick="switchTab('profile')" id="navProfileBtn" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all flex items-center gap-1.5 sm:gap-2">
+          <i class="ph ph-user-circle text-base"></i>
+          <span class="hidden sm:inline">Profil Toko</span>
+        </button>
+        <button onclick="switchTab('admin-login')" id="navAdminBtn" class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all flex items-center gap-1.5 sm:gap-2 relative">
+          <i class="ph ph-user-gear text-base"></i>
+          <span class="hidden sm:inline">Dashboard Admin</span>
+          <span id="adminNewOrderBadge" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full animate-ping"></span>
+        </button>
+        <button type="button" id="themeToggle" onclick="toggleTheme()" aria-label="Ganti ke mode terang" title="Ganti ke mode terang" class="px-3 py-2 text-xs sm:text-sm font-medium text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all flex items-center gap-1.5">
+          <i id="themeToggleIcon" class="ph ph-sun text-base"></i>
+          <span id="themeToggleLabel" class="hidden sm:inline">Mode Terang</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+      <div class="mb-5 rounded-xl border border-amber-800/70 bg-amber-950/30 px-4 py-3 text-xs text-amber-200" role="status">
+        <strong>Mode penyimpanan lokal:</strong> data tersimpan di browser/perangkat ini. Untuk toko publik multi-pelanggan, hubungkan database dan autentikasi server sebelum menerima pesanan sungguhan.
+      </div>
+
+
+    <!-- ==================== TAB 1: STORE / KATALOG PRE-ORDER ==================== -->
+    <section id="tab-store" class="space-y-8 animate-fade-in">
+      
+      <!-- Instagram Requirement Banner -->
+      <div id="igBanner" class="p-6 rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-950 border border-zinc-800 relative overflow-hidden shadow-2xl">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white text-2xl shadow-lg flex-shrink-0">
+              <i class="ph ph-instagram-logo"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                <i class="ph ph-shield-check text-emerald-400"></i> Syarat Mengikuti Pre-Order
+              </h3>
+              <p class="text-xs text-zinc-400">Ikuti akun Instagram resmi kami untuk mendapatkan info koleksi terbaru. Katalog tetap bisa dilihat dan digunakan.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <a id="igLinkBtn" href="https://instagram.com" target="_blank" onclick="markInstagramFollowed()" class="flex-1 sm:flex-none text-center px-5 py-2.5 bg-white hover:bg-zinc-200 text-black font-semibold text-sm rounded-xl transition flex items-center justify-center gap-2">
+              <i class="ph ph-instagram-logo text-lg"></i>
+              <span>Follow Instagram</span>
+            </a>
+            <button id="igConfirmBtn" onclick="confirmFollowedIG()" class="flex-1 sm:flex-none text-center px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium rounded-xl transition border border-zinc-700 flex items-center justify-center gap-2">
+              <i class="ph ph-check text-base"></i>
+              <span>Saya Sudah Follow</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Store Hero & Products -->
+      <div id="storeContent" class="opacity-100 pointer-events-auto transition-all duration-300">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-zinc-800 pb-5">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-widest text-zinc-400 flex items-center gap-1.5">
+              <i class="ph ph-sparkle text-amber-400"></i> Katalog Pre-Order Eksklusif
+            </span>
+            <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1" id="storeHeaderTitle">Koleksi Pakaian Terbaru</h1>
+            <p class="text-sm text-zinc-400 mt-1 flex items-center gap-2">
+              <i class="ph ph-info text-zinc-500"></i> Pilih jenis produk, ukuran, dan warna favorit Anda untuk dipesan.
+            </p>
+          </div>
+          <div id="igStatusBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-950/60 border border-red-800/80 text-red-400 text-xs font-medium w-fit">
+            <i class="ph ph-lock-key text-sm"></i>
+            <span>Katalog Siap Dipesan</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8" id="productGrid">
+          <!-- Dynamic Products Rendered Here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 1.5: PROFIL MARKET ==================== -->
+    <section id="tab-profile" class="hidden max-w-4xl mx-auto space-y-8 animate-fade-in">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
+          <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-zinc-950 border-2 border-zinc-700 overflow-hidden flex-shrink-0 shadow-lg flex items-center justify-center p-2">
+            <div id="profileAvatarContainer" class="w-full h-full flex items-center justify-center text-white">
+              <i class="ph ph-skull text-6xl"></i>
+            </div>
+            <img id="profileDisplayAvatar" src="" alt="Foto Profil Market" class="w-full h-full object-cover rounded-xl hidden" onerror="this.classList.add('hidden'); document.getElementById('profileAvatarContainer').classList.remove('hidden');">
+          </div>
+          <div class="space-y-3 text-center sm:text-left flex-grow">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h1 class="text-3xl sm:text-4xl font-chomsky text-white tracking-normal" id="profileDisplayName">JEMBER DESTRUCTION</h1>
+              <span class="px-3 py-1 bg-white text-black font-extrabold text-xs rounded-full uppercase tracking-wider w-fit mx-auto sm:mx-0 flex items-center gap-1.5">
+                <i class="ph ph-seal-check text-sm"></i> Official Store
+              </span>
+            </div>
+            <p class="text-sm text-zinc-300 leading-relaxed max-w-2xl" id="profileDisplayBio">
+              Brand fashion eksklusif dengan fokus pada desain kontemporer, bahan berkualitas tinggi, dan potongan presisi untuk gaya hidup modern.
+            </p>
+            
+            <div class="flex flex-wrap justify-center sm:justify-start gap-3 pt-2">
+              <a id="profileIgLink" href="https://instagram.com" target="_blank" class="px-3.5 py-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 transition flex items-center gap-2">
+                <i class="ph ph-instagram-logo text-rose-500 text-base"></i>
+                <span id="profileIgHandle">@jemberdestruction</span>
+              </a>
+              <a id="profileWaLink" href="https://wa.me/6281234567890" target="_blank" class="px-3.5 py-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 transition flex items-center gap-2">
+                <i class="ph ph-whatsapp-logo text-emerald-400 text-base"></i>
+                <span id="profileWaPhone">+62 812-3456-7890</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 sm:p-8 space-y-4">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2 border-b border-zinc-800 pb-3">
+            <i class="ph ph-book-open text-xl text-amber-400"></i> Asal Usul & Cerita Brand
+          </h3>
+          <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed whitespace-pre-line" id="profileDisplayStory">
+            Berdiri di Jember, JEMBER DESTRUCTION lahir dari semangat untuk menyajikan pakaian berkualitas tinggi dengan sistem Pre-Order yang transparan dan terukur. 
+
+            Setiap koleksi dirancang dengan teliti, menggunakan bahan katun pilihan dan teknik cetak premium untuk memastikan kenyamanan maksimal serta daya tahan produk. Kami percaya bahwa gaya busana yang tegas dan berkarakter terpancar dari kesederhanaan dan perhatian pada setiap detail produk.
+          </p>
+        </div>
+
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4 h-fit">
+          <h3 class="text-base font-bold text-white flex items-center gap-2 border-b border-zinc-800 pb-3">
+            <i class="ph ph-address-book text-lg text-zinc-400"></i> Informasi Kontak Admin
+          </h3>
+          <div class="space-y-3 text-xs">
+            <div class="p-3 bg-zinc-950 rounded-xl border border-zinc-800/80 space-y-1">
+              <span class="text-zinc-500 font-medium block">Instagram Resmi</span>
+              <span class="text-white font-semibold flex items-center gap-2" id="profileCardIg">@jemberdestruction</span>
+            </div>
+            <div class="p-3 bg-zinc-950 rounded-xl border border-zinc-800/80 space-y-1">
+              <span class="text-zinc-500 font-medium block">WhatsApp Customer Service</span>
+              <span class="text-white font-semibold flex items-center gap-2" id="profileCardWa">0812-3456-7890</span>
+            </div>
+            <div class="p-3 bg-zinc-950 rounded-xl border border-zinc-800/80 space-y-1">
+              <span class="text-zinc-500 font-medium block">Sistem Pemesanan</span>
+              <span class="text-emerald-400 font-semibold flex items-center gap-1.5"><i class="ph ph-check-circle"></i> Batch Pre-Order Terverifikasi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: CHECKOUT / BUY PAGE ==================== -->
+    <section id="tab-checkout" class="hidden max-w-3xl mx-auto space-y-6">
+      <button onclick="switchTab('store')" class="inline-flex items-center text-sm text-zinc-400 hover:text-white transition gap-1.5 mb-2">
+        <i class="ph ph-arrow-left text-base"></i> Kembali ke Katalog Produk
+      </button>
+
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 md:p-8 space-y-6 shadow-2xl">
+        <div class="border-b border-zinc-800 pb-4">
+          <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="ph ph-shopping-bag-open"></i> Formulir Pemesanan Pre-Order
+          </h2>
+          <p class="text-xs text-zinc-400 mt-1">Lengkapi rincian variasi barang dan alamat pengiriman Anda.</p>
+        </div>
+
+        <!-- Selected Product Summary Card -->
+        <div id="checkoutProductCard" class="p-4 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center gap-4">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Mode Pemesanan: Baru vs Pelunasan DP -->
+        <div class="flex rounded-xl bg-zinc-950 p-1 border border-zinc-800">
+          <button type="button" onclick="setCheckoutMode('NEW')" id="btnCheckoutModeNew" class="flex-1 py-2 text-xs font-bold rounded-lg transition bg-white text-black">
+            <i class="ph ph-plus-circle"></i> Pesanan Pre-Order Baru
+          </button>
+          <button type="button" onclick="setCheckoutMode('SETTLE')" id="btnCheckoutModeSettle" class="flex-1 py-2 text-xs font-bold rounded-lg transition text-zinc-400 hover:text-white">
+            <i class="ph ph-receipt"></i> Pelunasan Sisa DP
+          </button>
+        </div>
+
+        <!-- FORM 1: PESANAN PRE-ORDER BARU -->
+        <form id="checkoutForm" onsubmit="handleProcessOrder(event)" class="space-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-zinc-300 mb-1.5 flex items-center gap-1.5">
+                <i class="ph ph-ruler text-zinc-400"></i> Pilih Ukuran (Size) *
+              </label>
+              <select id="orderSize" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500">
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-zinc-300 mb-1.5 flex items-center gap-1.5">
+                <i class="ph ph-palette text-zinc-400"></i> Pilih Warna *
+              </label>
+              <select id="orderColor" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500">
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1.5 flex items-center gap-1.5">
+              <i class="ph ph-number-square-two text-zinc-400"></i> Jumlah (Qty) *
+            </label>
+            <input type="number" id="orderQty" min="1" value="1" onchange="updateCheckoutTotal()" oninput="updateCheckoutTotal()" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500">
+          </div>
+
+          <hr class="border-zinc-800">
+
+          <div class="space-y-4">
+            <h3 class="text-sm font-semibold text-white tracking-wide flex items-center gap-2">
+              <i class="ph ph-user text-zinc-400"></i> Data Diri & Alamat Pengiriman
+            </h3>
+            
+            <div>
+              <label class="block text-xs font-medium text-zinc-400 mb-1 flex items-center gap-1.5">
+                <i class="ph ph-identification-card"></i> Nama Lengkap *
+              </label>
+              <input type="text" id="custName" placeholder="Contoh: Budi Santoso" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-zinc-400 mb-1 flex items-center gap-1.5">
+                <i class="ph ph-whatsapp-logo text-emerald-400"></i> Nomor WhatsApp *
+              </label>
+              <input type="tel" id="custPhone" placeholder="Contoh: 081234567890" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-zinc-400 mb-1 flex items-center gap-1.5">
+                <i class="ph ph-map-pin"></i> Alamat Pengiriman Lengkap *
+              </label>
+              <textarea id="custAddress" rows="3" placeholder="Jl. Merdeka No. 12, Kel. Jember, Kec. Patrang, Kabupaten Jember, 68118" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500"></textarea>
+            </div>
+          </div>
+
+          <hr class="border-zinc-800">
+
+          <!-- Skema Pembayaran -->
+          <div class="space-y-4">
+            <h3 class="text-sm font-semibold text-white tracking-wide flex items-center gap-2">
+              <i class="ph ph-wallet text-zinc-400"></i> Skema Pembayaran
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="p-4 bg-zinc-950 border-2 border-white rounded-xl cursor-pointer flex flex-col justify-between space-y-2 relative" id="labelPayLunas">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <i class="ph ph-check-circle text-emerald-400"></i> Langsung Lunas
+                  </span>
+                  <input type="radio" name="payOption" value="LUNAS" checked onchange="updatePayOptionUI()" class="accent-white">
+                </div>
+                <p class="text-[11px] text-zinc-400">Bayar 100% penuh sekarang. Pesanan langsung masuk antrean kirim.</p>
+              </label>
+
+              <label class="p-4 bg-zinc-950 border border-zinc-800 rounded-xl cursor-pointer flex flex-col justify-between space-y-2 relative" id="labelPayDP">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <i class="ph ph-hourglass-medium text-amber-400"></i> Bayar DP (Uang Muka)
+                  </span>
+                  <input type="radio" name="payOption" value="DP" onchange="updatePayOptionUI()" class="accent-white">
+                </div>
+                <p class="text-[11px] text-zinc-400" id="dpTextDescription">Uang Muka Sesuai Ketentuan Produk.</p>
+              </label>
+            </div>
+
+            <!-- Total Breakdown Display -->
+            <div class="p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-2 text-xs">
+              <div class="flex justify-between text-zinc-400">
+                <span>Total Harga Produk:</span>
+                <span class="text-white font-medium" id="checkoutSubtotal">Rp 0</span>
+              </div>
+              <div class="flex justify-between text-amber-400 font-bold" id="dpPayRow">
+                <span>Minimal DP Harus Dibayar:</span>
+                <span id="checkoutAmountToPay">Rp 0</span>
+              </div>
+              <div class="flex justify-between text-zinc-400 pt-1 border-t border-zinc-800/60" id="dpRemainingRow">
+                <span>Sisa Pelunasan Nanti:</span>
+                <span class="text-zinc-200 font-semibold" id="checkoutRemainingPay">Rp 0</span>
+              </div>
+            </div>
+          </div>
+
+          <hr class="border-zinc-800">
+
+          <!-- Payment Section -->
+          <div class="space-y-4">
+            <h3 class="text-sm font-semibold text-white tracking-wide flex items-center gap-2">
+              <i class="ph ph-qr-code text-zinc-400"></i> Pembayaran QRIS
+            </h3>
+            
+            <div class="p-4 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col sm:flex-row items-center gap-6">
+              <div class="bg-white p-3 rounded-lg flex-shrink-0 text-center">
+                <img id="qrisDisplayImg" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=QRIS_PREORDER_JEMBER_DESTRUCTION" alt="QRIS Code" class="w-36 h-36 object-contain mx-auto">
+                <span class="text-[10px] font-bold text-black block mt-1 flex items-center justify-center gap-1">
+                  <i class="ph ph-device-mobile"></i> SCAN QRIS
+                </span>
+              </div>
+              <div class="space-y-2 text-center sm:text-left">
+                <span class="text-xs text-zinc-400 flex items-center justify-center sm:justify-start gap-1">
+                  <i class="ph ph-calculator"></i> Total Transfer Sekarang:
+                </span>
+                <div class="text-2xl font-bold text-emerald-400" id="checkoutTotalDisplay">Rp 0</div>
+                <p class="text-xs text-zinc-400 leading-relaxed">
+                  Scan kode QRIS di samping menggunakan Mobile Banking atau E-Wallet (Gopay, OVO, DANA, ShopeePay).
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-zinc-300 mb-1.5 flex items-center gap-1.5">
+                <i class="ph ph-upload-simple text-zinc-400"></i> Unggah File Foto Bukti Transfer (Berkas Lokal) *
+              </label>
+              <input type="file" id="paymentProof" accept="image/*" required class="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer bg-zinc-950 border border-zinc-800 rounded-xl p-2">
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 bg-white hover:bg-zinc-200 text-black font-bold rounded-xl transition shadow-xl text-sm flex items-center justify-center gap-2">
+            <i class="ph ph-check-circle text-lg"></i>
+            <span>Konfirmasi & Selesaikan Pre-Order</span>
+          </button>
+        </form>
+
+        <!-- FORM 2: PELUNASAN DP -->
+        <form id="settleForm" onsubmit="handleProcessSettleOrder(event)" class="hidden space-y-5">
+          <div class="p-4 bg-amber-950/40 border border-amber-800/80 rounded-xl text-xs space-y-1">
+            <span class="font-bold text-amber-300 flex items-center gap-1">
+              <i class="ph ph-info"></i> Formulir Pelunasan Pesanan DP
+            </span>
+            <p class="text-zinc-300 leading-relaxed">
+              Silakan masukkan ID Order DP Anda dan unggah Struk/Nota Bukti DP awal untuk dilunasi.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+              <i class="ph ph-hash"></i> Masukkan ID Order (Contoh: ORD-002) *
+            </label>
+            <input type="text" id="settleOrderId" placeholder="ORD-002" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500 uppercase">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+              <i class="ph ph-file-arrow-up text-amber-400"></i> Unggah File Foto Struk DP Awal *
+            </label>
+            <input type="file" id="settleReceiptProof" accept="image/*" required class="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer bg-zinc-950 border border-zinc-800 rounded-xl p-2">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+              <i class="ph ph-upload-simple text-emerald-400"></i> Unggah Foto Bukti Pelunasan *
+            </label>
+            <input type="file" id="settlePaymentProof" accept="image/*" required class="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer bg-zinc-950 border border-zinc-800 rounded-xl p-2">
+          </div>
+
+          <button type="submit" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-black font-bold rounded-xl transition shadow-xl text-sm flex items-center justify-center gap-2">
+            <i class="ph ph-check-square-offset text-lg"></i>
+            <span>Kirim Bukti Pelunasan</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: RECEIPT / NOTA ==================== -->
+    <section id="tab-receipt" class="hidden max-w-2xl mx-auto space-y-6">
+      <div id="receiptPrintArea" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+          <div>
+            <span class="text-[10px] uppercase font-bold tracking-widest text-zinc-500">BUKTI PRE-ORDER RESMI</span>
+            <h2 class="text-2xl font-chomsky text-white" id="receiptStoreName">JEMBER DESTRUCTION</h2>
+          </div>
+          <div class="text-right">
+            <span id="receiptStatusBadge" class="inline-block px-2.5 py-1 bg-emerald-950/80 border border-emerald-800 text-emerald-400 rounded-md text-xs font-bold">LUNAS</span>
+            <div class="text-[11px] text-zinc-400 mt-1" id="receiptDate">2026-10-31 10:00</div>
+          </div>
+        </div>
+
+        <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800/80 space-y-3">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-zinc-400">ID Pesanan:</span>
+            <span class="font-mono text-white font-bold" id="receiptOrderId">#ORD-001</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-zinc-400">Nama Pembeli:</span>
+            <span class="text-white font-medium" id="receiptCustName">Budi Santoso</span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-zinc-400">No. WhatsApp:</span>
+            <span class="text-white font-medium" id="receiptCustPhone">081234567890</span>
+          </div>
+          <div class="text-xs">
+            <span class="text-zinc-400 block mb-0.5">Alamat Pengiriman:</span>
+            <span class="text-zinc-200 block bg-zinc-900 p-2 rounded-lg border border-zinc-800/50" id="receiptCustAddress">-</span>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Rincian Pembayaran & Item</h4>
+          <div class="border border-zinc-800 rounded-xl overflow-hidden">
+            <div class="bg-zinc-950 px-4 py-2.5 text-xs text-zinc-400 grid grid-cols-12 font-medium">
+              <span class="col-span-6">Produk</span>
+              <span class="col-span-3 text-center">Variasi</span>
+              <span class="col-span-3 text-right">Subtotal</span>
+            </div>
+            <div class="px-4 py-3 text-sm grid grid-cols-12 items-center border-t border-zinc-800/60 bg-zinc-900">
+              <div class="col-span-6">
+                <p class="font-semibold text-white" id="receiptProdTitle">Kaos Oversize Heavyweight Cotton 24s</p>
+                <p class="text-xs text-zinc-400" id="receiptQtyUnit">1x @ Rp 150.000</p>
+              </div>
+              <div class="col-span-3 text-center text-xs">
+                <span class="inline-block px-2 py-0.5 bg-zinc-800 rounded text-zinc-200 font-mono" id="receiptVarSpec">Size M / Putih</span>
+              </div>
+              <div class="col-span-3 text-right font-bold text-white" id="receiptTotalAmount">
+                Rp 150.000
+              </div>
+            </div>
+            <div class="bg-zinc-950 p-4 border-t border-zinc-800 space-y-1.5 text-xs">
+              <div class="flex justify-between text-zinc-400">
+                <span>Nominal Masuk (Dibayar):</span>
+                <span class="text-emerald-400 font-bold" id="receiptPaidAmount">Rp 150.000</span>
+              </div>
+              <div class="flex justify-between text-zinc-400" id="receiptRemainingRow">
+                <span>Sisa Pelunasan:</span>
+                <span class="text-amber-400 font-bold" id="receiptRemainingAmount">Rp 0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 bg-gradient-to-r from-emerald-950/40 via-zinc-900 to-zinc-900 border border-emerald-800/50 rounded-xl space-y-3">
+          <div class="flex items-center gap-3">
+            <i class="ph ph-whatsapp-logo text-3xl text-emerald-400 flex-shrink-0"></i>
+            <div>
+              <h4 class="text-sm font-bold text-white">Gabung Grup WhatsApp Pre-Order</h4>
+              <p class="text-xs text-zinc-400">Dapatkan update proses produksi dan pengiriman secara real-time.</p>
+            </div>
+          </div>
+          <a id="receiptWaGroupBtn" href="#" target="_blank" class="block w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-center text-xs rounded-lg transition shadow-lg">
+            Klik Disini Untuk Masuk Grup WA
+          </a>
+        </div>
+
+        <div class="flex gap-3">
+          <button onclick="window.print()" class="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-xs rounded-xl transition border border-zinc-700 flex items-center justify-center gap-2">
+            <i class="ph ph-printer text-base"></i> Cetak Bukti / Simpan PDF
+          </button>
+          <button onclick="switchTab('store')" class="flex-1 py-2.5 bg-white hover:bg-zinc-200 text-black font-semibold text-xs rounded-xl transition flex items-center justify-center gap-2">
+            <i class="ph ph-house text-base"></i> Kembali ke Toko
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: ADMIN LOGIN (2-STEP AUTH) ==================== -->
+    <section id="tab-admin-login" class="hidden max-w-md mx-auto py-12">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl">
+        <div class="text-center space-y-1">
+          <div class="w-12 h-12 bg-white text-black rounded-2xl mx-auto flex items-center justify-center font-bold text-xl mb-3">
+            <i class="ph ph-shield-check"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-white">Login Admin</h2>
+          <p class="text-xs text-zinc-400">Akses terbatas khusus pengelola toko.</p>
+        </div>
+
+        <form id="adminStep1Form" onsubmit="handleAdminStep1(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1">Username Admin</label>
+            <input type="text" id="adminUser" placeholder="Masukkan username" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1">Password</label>
+            <input type="password" id="adminPass" placeholder="••••••••" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500">
+          </div>
+          <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800 text-[11px] text-zinc-400">
+            <span class="font-bold text-white">Akses Admin Bawaan (Default):</span><br>
+            Username: <code class="text-amber-400">admin</code> | Password: <code class="text-amber-400">admin123</code> | PIN: <code class="text-amber-400">123456</code>
+          </div>
+          <button type="submit" class="w-full py-3 bg-white hover:bg-zinc-200 text-black font-bold rounded-xl text-sm transition">
+            Lanjut ke Verifikasi PIN
+          </button>
+        </form>
+
+        <form id="adminStep2Form" onsubmit="handleAdminStep2(event)" class="hidden space-y-5">
+          <div class="text-center">
+            <span class="text-xs text-zinc-400">Langkah 2 dari 2</span>
+            <h3 class="text-base font-semibold text-white">Masukkan 6-Digit PIN Verifikasi</h3>
+          </div>
+
+          <div class="flex justify-center gap-2" id="pinInputContainer">
+            <input type="password" maxlength="1" class="pin-box w-10 h-12 bg-zinc-950 border border-zinc-800 rounded-lg text-center text-lg font-bold text-white focus:border-white focus:outline-none" required>
+            <input type="password" maxlength="1" class="pin-box w-10 h-12 bg-zinc-950 border border-zinc-800 rounded-lg text-center text-lg font-bold text-white focus:border-white focus:outline-none" required>
+            <input type="password" maxlength="1" class="pin-box w-10 h-12 bg-zinc-950 border border-zinc-800 rounded-lg text-center text-lg font-bold text-white focus:border-white focus:outline-none" required>
+            <input type="password" maxlength="1" class="pin-box w-10 h-12 bg-zinc-950 border border-zinc-800 rounded-lg text-center text-lg font-bold text-white focus:border-white focus:outline-none" required>
+            <input type="password" maxlength="1" class="pin-box w-10 h-12 bg-zinc-950 border border-zinc-800 rounded-lg text-center text-lg font-bold text-white focus:border-white focus:outline-none" required>
+            <input type="password" maxlength="1" class="pin-box w-10 h-12 bg-zinc-950 border border-zinc-800 rounded-lg text-center text-lg font-bold text-white focus:border-white focus:outline-none" required>
+          </div>
+
+          <div class="flex gap-2">
+            <button type="button" onclick="backToStep1()" class="w-1/3 py-2.5 bg-zinc-800 text-zinc-300 rounded-xl text-xs font-semibold hover:bg-zinc-700">
+              Batal
+            </button>
+            <button type="submit" class="w-2/3 py-2.5 bg-white text-black font-bold rounded-xl text-xs hover:bg-zinc-200 transition">
+              Masuk Dashboard
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 5: ADMIN DASHBOARD ==================== -->
+    <section id="tab-admin-dashboard" class="hidden space-y-8">
+      
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 bg-white text-black text-[10px] font-extrabold rounded">ADMIN PANEL</span>
+            <span class="text-xs text-zinc-400">Verifikasi 2 Langkah Aktif</span>
+          </div>
+          <h1 class="text-2xl font-extrabold text-white mt-1">Dashboard Pengelolaan Pre-Order</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="adminLogout()" class="px-4 py-2 bg-red-950/50 border border-red-800 hover:bg-red-900 text-red-300 text-xs font-semibold rounded-xl transition flex items-center gap-1.5">
+            <i class="ph ph-sign-out text-sm"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Financial Metrics Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl space-y-1">
+          <span class="text-xs font-medium text-zinc-400">Total Pemasukan (Omset)</span>
+          <div class="text-2xl font-extrabold text-white" id="statRevenue">Rp 0</div>
+          <span class="text-[11px] text-emerald-400 flex items-center gap-1"><i class="ph ph-arrow-up-right"></i> Uang Kas Terkumpul</span>
+        </div>
+        
+        <div class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl space-y-1">
+          <span class="text-xs font-medium text-zinc-400">Total HPP Produksi</span>
+          <div class="text-2xl font-extrabold text-amber-400" id="statHPP">Rp 0</div>
+          <span class="text-[11px] text-zinc-500">Biaya Modal Terkumpul</span>
+        </div>
+
+        <div class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl space-y-1">
+          <span class="text-xs font-medium text-zinc-400">Pengeluaran Operasional</span>
+          <div class="text-2xl font-extrabold text-red-400" id="statExpenses">Rp 0</div>
+          <span class="text-[11px] text-zinc-500">Biaya Tambahan Logistik</span>
+        </div>
+
+        <div class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl space-y-1">
+          <span class="text-xs font-medium text-zinc-400">Laba Bersih (Net Profit)</span>
+          <div class="text-2xl font-extrabold text-emerald-400" id="statNetProfit">Rp 0</div>
+          <span class="text-[11px] text-emerald-500/80">Omset - (HPP + Operasional)</span>
+        </div>
+      </div>
+
+      <!-- Admin Navigation Tabs -->
+      <div class="border-b border-zinc-800 flex flex-wrap gap-4 text-xs font-semibold">
+        <button onclick="switchAdminSubTab('orders')" id="subtab-orders-btn" class="pb-3 border-b-2 border-white text-white flex items-center gap-1.5">
+          <i class="ph ph-shopping-bag"></i> Data Pesanan Pre-Order
+        </button>
+        <button onclick="switchAdminSubTab('products')" id="subtab-products-btn" class="pb-3 border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-1.5">
+          <i class="ph ph-package"></i> Kelola & Tambah Produk
+        </button>
+        <button onclick="switchAdminSubTab('financials')" id="subtab-financials-btn" class="pb-3 border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-1.5">
+          <i class="ph ph-calculator"></i> Pencatatan Keuangan & HPP
+        </button>
+        <button onclick="switchAdminSubTab('settings')" id="subtab-settings-btn" class="pb-3 border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-1.5">
+          <i class="ph ph-sliders"></i> Pengaturan Toko & Keamanan
+        </button>
+      </div>
+
+      <!-- SUB-TAB 1: ORDERS MANAGEMENT -->
+      <div id="admin-subtab-orders" class="space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-white">Daftar Pemesan Auto-Grouping</h3>
+            <p class="text-xs text-zinc-400">Pesanan dikelompokkan secara otomatis berdasarkan Status Pembayaran, Ukuran, dan Warna.</p>
+          </div>
+          <button onclick="exportToExcel()" class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs rounded-xl transition flex items-center gap-2 shadow-lg">
+            <i class="ph ph-file-xls text-lg"></i>
+            <span>Export ke Excel (.xlsx)</span>
+          </button>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <input type="text" id="orderSearchInput" oninput="renderOrdersList()" placeholder="Cari nama / WhatsApp / ID..." class="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500 w-full sm:w-64">
+          
+          <select id="orderPaymentStatusFilter" onchange="renderOrdersList()" class="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-medium">
+            <option value="">Semua Status (LUNAS & DP)</option>
+            <option value="LUNAS">Hanya LUNAS</option>
+            <option value="DP">Hanya DP (Belum Lunas)</option>
+          </select>
+
+          <select id="orderSizeFilter" onchange="renderOrdersList()" class="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+            <option value="">Semua Size</option>
+            <option value="S">Size S</option>
+            <option value="M">Size M</option>
+            <option value="L">Size L</option>
+            <option value="XL">Size XL</option>
+            <option value="XXL">Size XXL</option>
+          </select>
+        </div>
+
+        <div id="groupedOrdersContainer" class="space-y-6">
+          <!-- Dynamic Grouped Buckets -->
+        </div>
+      </div>
+
+      <!-- SUB-TAB 2: PRODUCT MANAGEMENT (MINIMAL DP NOMINAL RP) -->
+      <div id="admin-subtab-products" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- FORM TAMBAH PRODUK BARU -->
+          <div class="lg:col-span-1 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4 h-fit">
+            <h3 class="text-base font-bold text-white flex items-center gap-2 border-b border-zinc-800 pb-3">
+              <i class="ph ph-plus-circle text-lg text-emerald-400"></i> Form Tambah Produk Pre-Order
+            </h3>
+            <form onsubmit="handleAddProduct(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-tag"></i> Nama Produk *
+                </label>
+                <input type="text" id="prodName" placeholder="Contoh: Hoodie Black Luxury" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                    <i class="ph ph-currency-circle-dollar"></i> Harga Jual (Rp) *
+                  </label>
+                  <input type="number" id="prodPrice" min="1" placeholder="185000" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                    <i class="ph ph-calculator"></i> HPP / Modal (Rp) *
+                  </label>
+                  <input type="number" id="prodHPP" min="0" placeholder="95000" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
+                </div>
+              </div>
+
+              <!-- INPUT MINIMAL DP NOMINAL (RP) -->
+              <div>
+                <label class="block text-xs font-medium text-amber-400 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-coins"></i> Minimal DP (Nominal Rp) *
+                </label>
+                <input type="number" id="prodMinDP" min="0" placeholder="75000" required class="w-full bg-zinc-950 border border-amber-800/80 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                <p class="text-[10px] text-zinc-500 mt-1">Nominal minimal DP yang harus dibayar pembeli per pcs.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-ruler"></i> Opsi Ukuran (Pisahkan dengan koma)
+                </label>
+                <input type="text" id="prodSizes" value="S, M, L, XL, XXL" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
+              </div>
+
+              <!-- OPSI WARNA DINAMIS + UPLOAD FOTO WARNA -->
+              <div class="space-y-2 border-t border-b border-zinc-800 py-3">
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                    <i class="ph ph-palette text-amber-400"></i> Warna & Foto Varian Warna *
+                  </label>
+                  <button type="button" onclick="addColorOptionRow()" class="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-amber-400 font-semibold text-[10px] rounded-lg transition flex items-center gap-1">
+                    <i class="ph ph-plus"></i> Tambah Warna
+                  </button>
+                </div>
+                <div id="colorOptionsContainer" class="space-y-2">
+                  <!-- Dynamic Color Rows Rendered Here -->
+                </div>
+                <p class="text-[10px] text-zinc-500">Masukkan nama warna dan unggah foto khusus untuk varian warna tersebut.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-image-square"></i> Unggah Gambar Sampul / Utama Produk *
+                </label>
+                <input type="file" id="prodImageFile" accept="image/*" required class="w-full text-xs text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer bg-zinc-950 border border-zinc-800 rounded-xl p-2">
+              </div>
+
+              <button type="submit" class="w-full py-3 bg-white hover:bg-zinc-200 text-black font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-lg">
+                <i class="ph ph-plus-circle text-base"></i>
+                <span>Simpan & Publikasikan Produk</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- DAFTAR PRODUK AKTIF -->
+          <div class="lg:col-span-2 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="ph ph-list-bullets text-lg text-amber-400"></i> Daftar Produk Aktif di Katalog
+              </h3>
+              <span id="productCountBadge" class="px-2.5 py-1 bg-zinc-800 text-zinc-300 rounded-full text-xs font-mono font-bold">0 Produk</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-zinc-950 text-zinc-400 border-b border-zinc-800">
+                  <tr>
+                    <th class="p-3">Foto</th>
+                    <th class="p-3">Nama Produk</th>
+                    <th class="p-3">Harga Jual</th>
+                    <th class="p-3">Minimal DP</th>
+                    <th class="p-3">HPP Modal</th>
+                    <th class="p-3">Ukuran & Warna</th>
+                    <th class="p-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="adminProductsTableBody" class="divide-y divide-zinc-800">
+                  <!-- Dynamic List -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SUB-TAB 3: FINANCIALS -->
+      <div id="admin-subtab-financials" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4 h-fit">
+            <h3 class="text-base font-bold text-white">Tambah Catatan Pengeluaran / Pemasukan</h3>
+            <form id="cashflowForm" onsubmit="handleAddCashflow(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1">Jenis Transaksi</label>
+                <select id="cfType" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none">
+                  <option value="EXPENSE">Pengeluaran (Biaya Operasional / Sablon / Kemasan)</option>
+                  <option value="INCOME">Pemasukan Tambahan</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1">Deskripsi Transaksi *</label>
+                <input type="text" id="cfDesc" placeholder="Contoh: Beli Plastik Packaging" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1">Nominal (Rp) *</label>
+                <input type="number" id="cfAmount" min="1" placeholder="50000" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none">
+              </div>
+              <button type="submit" class="w-full py-2.5 bg-white hover:bg-zinc-200 text-black font-bold text-xs rounded-xl transition">
+                Simpan Transaksi
+              </button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-2 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4">
+            <h3 class="text-base font-bold text-white">Riwayat Pengeluaran & Pemasukan Lanjutan</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-zinc-950 text-zinc-400 border-b border-zinc-800">
+                  <tr>
+                    <th class="p-3">Tanggal</th>
+                    <th class="p-3">Jenis</th>
+                    <th class="p-3">Keterangan</th>
+                    <th class="p-3 text-right">Nominal</th>
+                    <th class="p-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="cashflowTableBody" class="divide-y divide-zinc-800">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-TAB 4: SETTINGS -->
+      <div id="admin-subtab-settings" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2 border-b border-zinc-800 pb-3">
+              <i class="ph ph-shield-check text-lg text-amber-400"></i> Pengaturan Keamanan Login Admin
+            </h3>
+            <form onsubmit="handleSaveSecuritySettings(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-user"></i> Username Admin Baru *
+                </label>
+                <input type="text" id="settingAdminUser" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-key"></i> Password Admin Baru *
+                </label>
+                <input type="password" id="settingAdminPass" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-lock-key"></i> PIN 6-Digit Baru *
+                </label>
+                <input type="password" id="settingAdminPin" maxlength="6" pattern="\d{6}" placeholder="Contoh: 123456" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-zinc-500">
+              </div>
+              <button type="submit" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition flex items-center justify-center gap-2">
+                <i class="ph ph-floppy-disk text-base"></i>
+                <span>Perbarui Keamanan Login Admin</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2 border-b border-zinc-800 pb-3">
+              <i class="ph ph-sliders text-lg text-zinc-400"></i> Pengaturan Umum & Profil Market
+            </h3>
+            <form onsubmit="handleSaveSettings(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-image-square"></i> Unggah Foto Profil Toko
+                </label>
+                <input type="file" id="settingAvatarFile" accept="image/*" class="w-full text-xs text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer bg-zinc-950 border border-zinc-800 rounded-xl p-2">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-storefront"></i> Nama Toko / Brand *
+                </label>
+                <input type="text" id="settingStoreName" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <i class="ph ph-article"></i> Bio Singkat Toko *
+                </label>
+                <textarea id="settingStoreBio" rows="2" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none"></textarea>
+              </div>
+              <button type="submit" class="py-2.5 px-6 bg-white hover:bg-zinc-200 text-black font-bold text-xs rounded-xl transition flex items-center gap-2">
+                <i class="ph ph-floppy-disk text-base"></i>
+                <span>Simpan Perubahan Profil & Toko</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-zinc-800 bg-black/60 py-6 text-center text-xs text-zinc-500 relative z-10">
+    <p>© 2026 JEMBER DESTRUCTION. Pre-Order Management System.</p>
+  </footer>
+
+  <!-- Modal Bukti Transfer -->
+  <div id="proofModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl max-w-lg w-full space-y-4">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+        <h3 class="text-sm font-bold text-white">Bukti Transfer Pembayaran</h3>
+        <button onclick="closeProofModal()" class="text-zinc-400 hover:text-white text-lg"><i class="ph ph-x"></i></button>
+      </div>
+      <div class="flex justify-center bg-black p-2 rounded-xl border border-zinc-800">
+        <img id="modalProofImg" src="" alt="Proof" class="max-h-[70vh] object-contain rounded-lg">
+      </div>
+      <button onclick="closeProofModal()" class="w-full py-2 bg-zinc-800 text-white rounded-xl text-xs font-semibold">Tutup</button>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>

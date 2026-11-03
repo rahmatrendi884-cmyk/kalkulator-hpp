@@ -1,0 +1,125 @@
+@font-face {
+      font-family: 'Chomsky';
+      src: url('https://fonts.cdnfonts.com/s/72922/Chomsky.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    .font-chomsky {
+      font-family: 'Chomsky', serif;
+      letter-spacing: 0.05em;
+    }
+
+body {
+      font-family: 'Inter', sans-serif;
+      background-color: #050505;
+      color: #FAFAFA;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0A0A0A;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272A;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3F3F46;
+    }
+    /* Print Styles */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #receiptPrintArea, #receiptPrintArea * {
+        visibility: visible;
+      }
+      #receiptPrintArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: none !important;
+      }
+      #receiptPrintArea span, #receiptPrintArea h2, #receiptPrintArea div, #receiptPrintArea p {
+        color: #000000 !important;
+      }
+    }
+
+/* Theme switch: light mode overrides the original dark Tailwind utility palette. */
+html[data-theme="light"] body {
+  background-color: #f4f4f5 !important;
+  color: #18181b !important;
+}
+html[data-theme="light"] .bg-brand-black,
+html[data-theme="light"] .bg-black,
+html[data-theme="light"] [class~="bg-black/80"],
+html[data-theme="light"] .bg-zinc-950,
+html[data-theme="light"] .bg-zinc-900,
+html[data-theme="light"] [class~="bg-zinc-900/50"],
+html[data-theme="light"] .bg-zinc-800 {
+  background-color: #ffffff !important;
+}
+html[data-theme="light"] [class~="bg-zinc-950/30"],
+html[data-theme="light"] [class~="bg-zinc-950/40"],
+html[data-theme="light"] [class~="bg-zinc-900/80"] {
+  background-color: #f4f4f5 !important;
+}
+html[data-theme="light"] .bg-gradient-to-r {
+  background-image: none !important;
+  background-color: #ffffff !important;
+}
+html[data-theme="light"] .text-white,
+html[data-theme="light"] .text-zinc-100,
+html[data-theme="light"] .text-zinc-200,
+html[data-theme="light"] .text-zinc-300 {
+  color: #27272a !important;
+}
+html[data-theme="light"] .text-zinc-400,
+html[data-theme="light"] .text-zinc-500 {
+  color: #52525b !important;
+}
+html[data-theme="light"] .border-zinc-900,
+html[data-theme="light"] .border-zinc-800,
+html[data-theme="light"] .border-zinc-700,
+html[data-theme="light"] [class~="border-zinc-800/60"],
+html[data-theme="light"] [class~="border-zinc-800/80"] {
+  border-color: #d4d4d8 !important;
+}
+html[data-theme="light"] input:not([type="radio"]):not([type="checkbox"]),
+html[data-theme="light"] textarea,
+html[data-theme="light"] select {
+  background-color: #ffffff !important;
+  color: #18181b !important;
+  border-color: #d4d4d8 !important;
+}
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #71717a !important;
+}
+html[data-theme="light"] header {
+  background-color: rgba(255,255,255,.92) !important;
+  border-color: #e4e4e7 !important;
+}
+html[data-theme="light"] .hover\:bg-zinc-950\/50:hover,
+html[data-theme="light"] .hover\:bg-zinc-800:hover,
+html[data-theme="light"] .hover\:bg-zinc-700:hover {
+  background-color: #e4e4e7 !important;
+}
+html[data-theme="light"] .bg-zinc-950 .text-white,
+html[data-theme="light"] .bg-zinc-900 .text-white {
+  color: #27272a !important;
+}
+html[data-theme="light"] #themeToggle {
+  color: #27272a !important;
+  border-color: #d4d4d8 !important;
+}
+html[data-theme="light"] #receiptPrintArea {
+  background-color: #ffffff !important;
+  color: #18181b !important;
+}
